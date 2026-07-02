@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Flag from "@/components/Flag";
 
 interface GeoResult {
@@ -59,13 +60,14 @@ export default function AutocompleteInput({
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(-1);
+  // Track input position for portal placement
+  const [inputRect, setInputRect] = useState<DOMRect | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingRef = useRef(false);
 
-  // Sync external value changes (e.g. form reset) — but only if the user isn't
-  // currently typing so we don't clobber their input mid-edit.
+  // Sync external value changes (e.g. form reset).
   useEffect(() => {
     if (!typingRef.current) {
       setQuery(value);
@@ -114,6 +116,7 @@ export default function AutocompleteInput({
     onChange(result.name);
     setOpen(false);
     setResults([]);
+    setInputRect(null);
     onSelect?.(result);
     inputRef.current?.blur();
   }
@@ -134,8 +137,79 @@ export default function AutocompleteInput({
     }
   }
 
+  function handleFocus() {
+    typingRef.current = false;
+    if (inputRef.current) {
+      setInputRect(inputRef.current.getBoundingClientRect());
+    }
+    if (results.length > 0) setOpen(true);
+  }
+
+  // Re-track position on scroll/resize while open
+  useEffect(() => {
+    if (!open) return;
+    function track() {
+      if (inputRef.current) setInputRect(inputRef.current.getBoundingClientRect());
+    }
+    window.addEventListener("scroll", track, { passive: true });
+    window.addEventListener("resize", track);
+    return () => {
+      window.removeEventListener("scroll", track);
+      window.removeEventListener("resize", track);
+    };
+  }, [open]);
+
+  // Dropdown rendered via portal so it escapes ALL stacking contexts.
+  const dropdown = open && results.length > 0 && inputRect ? (
+    <ul
+      className="fixed rounded-xl border border-slate-200 bg-white py-1 shadow-2xl shadow-slate-300/50"
+      style={{
+        top: inputRect.bottom + window.scrollY + 4,
+        left: inputRect.left + window.scrollX,
+        width: inputRect.width,
+        zIndex: 9999,
+      }}
+    >
+      {results.map((r, i) => (
+        <li key={`${r.latitude}-${r.longitude}-${i}`}>
+          <button
+            type="button"
+            onClick={() => select(r)}
+            className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition ${
+              i === highlighted ? "bg-teal-50 text-teal-900" : "hover:bg-slate-50"
+            }`}
+          >
+            <span className="shrink-0 text-base">{featureIcon(r.feature_code)}</span>
+            <span className="shrink-0 text-lg leading-none">
+              <Flag cc={r.country_code ?? "UN"} />
+            </span>
+            <span className="min-w-0 flex-1 truncate">
+              <span className="font-medium text-slate-900">{r.name}</span>
+              {r.admin1 && (
+                <span className="ml-1.5 text-slate-400">, {r.admin1}</span>
+              )}
+              {r.country && (
+                <span className="ml-1 text-slate-400">· {r.country}</span>
+              )}
+            </span>
+            {r.feature_code === "AIRP" || r.feature_code === "AIRPORT" ? (
+              <span className="shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
+                Aéroport
+              </span>
+            ) : null}
+          </button>
+        </li>
+      ))}
+      <li className="border-t border-slate-100">
+        <p className="px-3 py-1 text-[10px] text-slate-400">
+          Géocodage gratuit par Open-Meteo
+        </p>
+      </li>
+    </ul>
+  ) : null;
+
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef}>
       {label && (
         <label className="mb-1.5 block text-sm font-medium text-slate-700">
           {label}
@@ -149,13 +223,8 @@ export default function AutocompleteInput({
           value={query}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => {
-            typingRef.current = false; // sync with prop on focus
-            if (results.length > 0) setOpen(true);
-          }}
-          onBlur={() => {
-            typingRef.current = false;
-          }}
+          onFocus={handleFocus}
+          onBlur={() => { typingRef.current = false; }}
           placeholder={placeholder}
           autoComplete="off"
           className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 pr-9 text-slate-800 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-2 focus:ring-teal-100"
@@ -186,53 +255,7 @@ export default function AutocompleteInput({
           </button>
         )}
       </div>
-
-      {/* Dropdown */}
-      {open && results.length > 0 && (
-        <ul className="absolute z-50 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl shadow-slate-200/60">
-          {results.map((r, i) => (
-            <li key={`${r.latitude}-${r.longitude}-${i}`}>
-              <button
-                type="button"
-                onClick={() => select(r)}
-                className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition ${
-                  i === highlighted ? "bg-teal-50 text-teal-900" : "hover:bg-slate-50"
-                }`}
-              >
-                <span className="shrink-0 text-base">{featureIcon(r.feature_code)}</span>
-                <span className="shrink-0 text-lg leading-none">
-                  <Flag cc={r.country_code ?? "UN"} />
-                </span>
-                <span className="min-w-0 flex-1 truncate">
-                  <span className="font-medium text-slate-900">{r.name}</span>
-                  {r.admin1 && (
-                    <span className="ml-1.5 text-slate-400">, {r.admin1}</span>
-                  )}
-                  {r.country && (
-                    <span className="ml-1 text-slate-400">· {r.country}</span>
-                  )}
-                </span>
-                {r.feature_code === "AIRP" || r.feature_code === "AIRPORT" ? (
-                  <span className="shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
-                    Aéroport
-                  </span>
-                ) : null}
-              </button>
-            </li>
-          ))}
-          <li className="border-t border-slate-100 pt-1 pb-0.5">
-            <p className="px-3 py-1 text-[10px] text-slate-400">
-              Géocodage gratuit par Open-Meteo · {(results.filter(r => r.feature_code === "AIRP" || r.feature_code === "AIRPORT").length > 0 ? "" : "")}
-            </p>
-          </li>
-        </ul>
-      )}
-
-      {open && results.length === 0 && !loading && query.trim().length >= 2 && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-400 shadow-xl">
-          Aucun résultat pour « {query} »
-        </div>
-      )}
+      {typeof document !== "undefined" ? createPortal(dropdown, document.body) : null}
     </div>
   );
 }
