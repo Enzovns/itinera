@@ -52,3 +52,27 @@ export function googleFlightsUrl(from: string, to: string): string {
     `vols ${from} ${to}`
   )}`;
 }
+
+// ── Vols : comparateurs de prix ──────────────────────────────────────────────
+
+export function skyscannerUrl(from: string, to: string): string {
+  // Skyscanner direct search — works without API key (opens pre-filled search).
+  const fromEnc = encodeURIComponent(from);
+  const toEnc = encodeURIComponent(to);
+  return `https://www.skyscanner.fr/transport/vols/${fromEnc}/${toEnc}/?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=1&preferDirects=false&outboundaltsenabled=false&inboundaltsenabled=false`;
+}
+
+export function skyscannerFlightsUrl(from: string, to: string): string {
+  // Short personalised link → direct to flights page.
+  const fromEnc = encodeURIComponent(from);
+  const toEnc = encodeURIComponent(to);
+  return `https://www.skyscanner.fr/transport/vols/f/${fromEnc}/${toEnc}/?adultsv2=1&cabinclass=economy&rtn=1`;
+}
+
+export function kayakDirectUrl(from: string, to: string): string {
+  return `https://www.kayak.com/flights/${encodeURIComponent(from)}/${encodeURIComponent(to)}/-cheapest?sort=price_a`;
+}
+
+export function kayakFRUrl(from: string, to: string): string {
+  return `https://www.kayak.fr/flights/${encodeURIComponent(from)}/${encodeURIComponent(to)}/cheapest?sort=price_a`;
+}

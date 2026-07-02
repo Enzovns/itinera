@@ -7,7 +7,7 @@ import PracticalInfo from "@/components/sejour/PracticalInfo";
 import { monthlyTemp } from "@/lib/climate";
 import { dailyBudget } from "@/lib/costOfLiving";
 import { euro, monthName, MONTHS_FR, VIBE_EMOJI } from "@/lib/format";
-import { googleFlightsUrl } from "@/lib/deeplinks";
+import { googleFlightsUrl, skyscannerUrl, kayakFRUrl } from "@/lib/deeplinks";
 
 export default function SejourView({
   destination,
@@ -76,14 +76,32 @@ export default function SejourView({
         </div>
 
         {from && (
-          <a
-            href={googleFlightsUrl(from, destination.city)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            ✈️ Voir les vols {from} → {destination.city} sur Google Flights ↗
-          </a>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={googleFlightsUrl(from, destination.city)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              ✈️ Google Flights ↗
+            </a>
+            <a
+              href={skyscannerUrl(from, destination.city)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Skyscanner ↗
+            </a>
+            <a
+              href={kayakFRUrl(from, destination.city)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600"
+            >
+              Kayak ↗
+            </a>
+          </div>
         )}
 
         <Lodging destination={destination} initialTravelers={travelers} />

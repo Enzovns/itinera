@@ -91,7 +91,6 @@ export default function PracticalInfo({
 
   useEffect(() => {
     let active = true;
-    setState("loading");
     fetchCountryFacts(destination.cc).then((f) => {
       if (!active) return;
       setFacts(f);
