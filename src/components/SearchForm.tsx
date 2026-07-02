@@ -8,6 +8,7 @@ import type {
   WeatherWish,
 } from "@/lib/types";
 import { MONTHS_FR, VIBE_EMOJI, VIBE_LABELS } from "@/lib/format";
+import AutocompleteInput from "@/components/AutocompleteInput";
 
 const WEATHER_OPTIONS: { value: WeatherWish; label: string; icon: string }[] = [
   { value: "chaud", label: "Chaud", icon: "☀️" },
@@ -77,27 +78,19 @@ export default function SearchForm({ onSearch, loading }: Props) {
     >
       {/* Cities */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Ville de départ" required>
-          <input
-            value={originQuery}
-            onChange={(e) => setOriginQuery(e.target.value)}
-            placeholder="ex. Bruxelles"
-            className={inputClass}
-            autoComplete="off"
-          />
-        </Field>
-        <Field
+        <AutocompleteInput
+          value={originQuery}
+          onChange={setOriginQuery}
+          placeholder="ex. Bruxelles, CDG, France…"
+          label="Ville de départ"
+          required
+        />
+        <AutocompleteInput
+          value={destinationQuery}
+          onChange={setDestinationQuery}
+          placeholder="ex. Tokyo, NRT, Japon…"
           label="Ville d'arrivée"
-          hint="Optionnel — laissez vide pour explorer"
-        >
-          <input
-            value={destinationQuery}
-            onChange={(e) => setDestinationQuery(e.target.value)}
-            placeholder="ex. Sydney"
-            className={inputClass}
-            autoComplete="off"
-          />
-        </Field>
+        />
       </div>
 
       {/* Stops (only when arrival set) */}
