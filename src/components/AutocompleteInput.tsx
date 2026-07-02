@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useId } from "react";
 import { createPortal } from "react-dom";
 import Flag from "@/components/Flag";
 
@@ -66,6 +66,7 @@ export default function AutocompleteInput({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingRef = useRef(false);
+  const listboxId = useId();
 
   // Sync external value changes (e.g. form reset).
   useEffect(() => {
@@ -162,6 +163,9 @@ export default function AutocompleteInput({
   // Dropdown rendered via portal so it escapes ALL stacking contexts.
   const dropdown = open && results.length > 0 && inputRect ? (
     <ul
+      id={listboxId}
+      role="listbox"
+      aria-label="Suggestions de villes et aéroports"
       className="fixed rounded-xl border border-slate-200 bg-white py-1 shadow-2xl shadow-slate-300/50"
       style={{
         top: inputRect.bottom + window.scrollY + 4,
@@ -171,9 +175,12 @@ export default function AutocompleteInput({
       }}
     >
       {results.map((r, i) => (
-        <li key={`${r.latitude}-${r.longitude}-${i}`}>
+        <li key={`${r.latitude}-${r.longitude}-${i}`} role="presentation">
           <button
             type="button"
+            id={`${listboxId}-option-${i}`}
+            role="option"
+            aria-selected={i === highlighted}
             onClick={() => select(r)}
             className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition ${
               i === highlighted ? "bg-teal-50 text-teal-900" : "hover:bg-slate-50"
@@ -200,8 +207,8 @@ export default function AutocompleteInput({
           </button>
         </li>
       ))}
-      <li className="border-t border-slate-100">
-        <p className="px-3 py-1 text-[10px] text-slate-400">
+      <li className="border-t border-slate-100" role="presentation">
+        <p className="px-3 py-1 text-[10px] text-slate-400" aria-hidden="true">
           Géocodage gratuit par Open-Meteo
         </p>
       </li>
@@ -227,6 +234,15 @@ export default function AutocompleteInput({
           onBlur={() => { typingRef.current = false; }}
           placeholder={placeholder}
           autoComplete="off"
+          role="combobox"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          aria-controls={listboxId}
+          aria-autocomplete="list"
+          aria-activedescendant={
+            highlighted >= 0 ? `${listboxId}-option-${highlighted}` : undefined
+          }
+          aria-label={label ?? "Recherche de ville"}
           className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 pr-9 text-slate-800 outline-none transition focus:border-teal-400 focus:bg-white focus:ring-2 focus:ring-teal-100"
         />
         {loading && (

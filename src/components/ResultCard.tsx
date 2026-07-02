@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { RankedDestination } from "@/lib/types";
 import { euro, monthName, VIBE_EMOJI } from "@/lib/format";
+import { formatInCurrency } from "@/lib/currency";
 import Flag from "@/components/Flag";
 
 interface Props {
@@ -66,6 +67,9 @@ export default function ResultCard({
           <p className="text-lg font-bold text-slate-900">
             {euro(flight.roundTrip)}
           </p>
+          <p className="text-xs text-slate-400">
+            ≈ {formatInCurrency(flight.roundTrip, d.currency)} en {d.currency}
+          </p>
           <p className="text-xs text-slate-500">
             {flight.distanceKm.toLocaleString("fr-FR")} km · aller {euro(flight.oneWay)}
           </p>
@@ -81,9 +85,9 @@ export default function ResultCard({
           {costVsOrigin !== undefined && <CostRatio ratio={costVsOrigin} />}
         </div>
         <div className="mt-2 grid grid-cols-3 gap-2 text-center">
-          <Budget label="Routard" value={costPerDay.budget} />
-          <Budget label="Confort" value={costPerDay.mid} highlight />
-          <Budget label="Premium" value={costPerDay.comfort} />
+          <Budget label="Routard" value={costPerDay.budget} currency={d.currency} />
+          <Budget label="Confort" value={costPerDay.mid} currency={d.currency} highlight />
+          <Budget label="Premium" value={costPerDay.comfort} currency={d.currency} />
         </div>
       </div>
 
@@ -182,10 +186,12 @@ function Stat({
 function Budget({
   label,
   value,
+  currency,
   highlight,
 }: {
   label: string;
   value: number;
+  currency: string;
   highlight?: boolean;
 }) {
   return (
@@ -195,6 +201,9 @@ function Budget({
       }`}
     >
       <p className="text-sm font-bold text-slate-800">{euro(value)}</p>
+      <p className="text-[10px] text-slate-400">
+        ≈ {formatInCurrency(value, currency)}
+      </p>
       <p className="text-[10px] uppercase tracking-wide text-slate-400">
         {label}
       </p>

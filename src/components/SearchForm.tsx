@@ -10,6 +10,20 @@ import type {
 import { MONTHS_FR, VIBE_EMOJI, VIBE_LABELS } from "@/lib/format";
 import AutocompleteInput from "@/components/AutocompleteInput";
 
+// Popular departure cities shown as quick-select chips.
+const POPULAR_CITIES = [
+  { label: "Paris", query: "Paris" },
+  { label: "Bruxelles", query: "Bruxelles" },
+  { label: "Lyon", query: "Lyon" },
+  { label: "Genève", query: "Geneve" },
+  { label: "Montréal", query: "Montreal" },
+  { label: "Marrakech", query: "Marrakech" },
+  { label: "Barcelone", query: "Barcelone" },
+  { label: "Londres", query: "Londres" },
+  { label: "Berlin", query: "Berlin" },
+  { label: "New York", query: "New York" },
+];
+
 const WEATHER_OPTIONS: { value: WeatherWish; label: string; icon: string }[] = [
   { value: "chaud", label: "Chaud", icon: "☀️" },
   { value: "doux", label: "Doux", icon: "🌤️" },
@@ -77,20 +91,41 @@ export default function SearchForm({ onSearch, loading }: Props) {
       className="rounded-3xl bg-white shadow-xl shadow-slate-200/60 ring-1 ring-slate-100 p-6 sm:p-8 space-y-7"
     >
       {/* Cities */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <AutocompleteInput
-          value={originQuery}
-          onChange={setOriginQuery}
-          placeholder="ex. Bruxelles, CDG, France…"
-          label="Ville de départ"
-          required
-        />
-        <AutocompleteInput
-          value={destinationQuery}
-          onChange={setDestinationQuery}
-          placeholder="ex. Tokyo, NRT, Japon…"
-          label="Ville d'arrivée"
-        />
+      <div className="space-y-3">
+        {/* Popular departure cities */}
+        <div>
+          <p className="mb-2 text-xs font-medium text-slate-400">
+            Villes populaires
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {POPULAR_CITIES.map((c) => (
+              <button
+                key={c.query}
+                type="button"
+                onClick={() => setOriginQuery(c.query)}
+                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700"
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <AutocompleteInput
+            value={originQuery}
+            onChange={setOriginQuery}
+            placeholder="ex. Bruxelles, CDG, France…"
+            label="Ville de départ"
+            required
+          />
+          <AutocompleteInput
+            value={destinationQuery}
+            onChange={setDestinationQuery}
+            placeholder="ex. Tokyo, NRT, Japon…"
+            label="Ville d'arrivée"
+          />
+        </div>
       </div>
 
       {/* Stops (only when arrival set) */}
